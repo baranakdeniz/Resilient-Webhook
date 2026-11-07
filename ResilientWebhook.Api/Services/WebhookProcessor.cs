@@ -8,7 +8,8 @@ namespace ResilientWebhook.Api.Services
     public class WebhookProcessor
     {
         private readonly WebhookSignatureValidator _validator;
-        private readonly InMemoryIdempotencyStore _idempotencyStore;
+        private readonly ILogger<WebhookProcessor> _logger;
+        private readonly IIdempotencyStore _idempotencyStore;
         private readonly IWebhookQueue _queue;
 
         private static readonly JsonSerializerOptions JsonOptions = new()
@@ -18,12 +19,15 @@ namespace ResilientWebhook.Api.Services
 
         public WebhookProcessor(
             WebhookSignatureValidator validator,
-            InMemoryIdempotencyStore idempotencyStore,
-            IWebhookQueue queue)
+            IWebhookQueue queue,
+            ILogger<WebhookProcessor> logger,
+            IIdempotencyStore idempotencyStore)
         {
             _validator = validator;
             _idempotencyStore = idempotencyStore;
             _queue = queue;
+            _logger = logger;
+            _idempotencyStore = idempotencyStore;
         }
 
         public async Task<IResult> ProcessAsync(HttpContext context, CancellationToken ct)
@@ -48,6 +52,7 @@ namespace ResilientWebhook.Api.Services
             }
             catch { return Results.Unauthorized(); }
 
+
             // 4. İmza doğrulama
             if (!_validator.TryValidate(ts!, rawBytes, sig!))
                 return Results.Unauthorized();
@@ -56,7 +61,7 @@ namespace ResilientWebhook.Api.Services
             var webhookId = context.Request.Headers["webhook-id"].ToString();
             if (string.IsNullOrEmpty(webhookId)) return Results.BadRequest();
 
-            if (!_idempotencyStore.TryAdd(webhookId, TimeSpan.FromMinutes(5)))
+            if (!await _idempotencyStore.TryAddAsync(webhookId, TimeSpan.FromMinutes(5)))
                 return Results.Ok(); // zaten işlendi
 
             // 6. Deserialize — başarısızsa anahtarı geri al
@@ -67,12 +72,12 @@ namespace ResilientWebhook.Api.Services
             }
             catch
             {
-                _idempotencyStore.Remove(webhookId);
+                await _idempotencyStore.RemoveAsync(webhookId);
                 return Results.BadRequest();
             }
             if (payload is null)
             {
-                _idempotencyStore.Remove(webhookId);
+                await _idempotencyStore.RemoveAsync(webhookId);
                 return Results.BadRequest();
             }
 
@@ -83,7 +88,7 @@ namespace ResilientWebhook.Api.Services
             }
             catch
             {
-                _idempotencyStore.Remove(webhookId);
+                await _idempotencyStore.RemoveAsync(webhookId);
                 throw;
             }
 

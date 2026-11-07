@@ -1,0 +1,10 @@
+$kind: http-request
+name: ""
+url: http://localhost:5083/api/webhook?asdahsadghasdga=trial123
+method: POST
+queryParams:
+  - key: asdahsadghasdga
+    value: trial123
+    disabled: false
+    description: this is a trial one
+order: 1000

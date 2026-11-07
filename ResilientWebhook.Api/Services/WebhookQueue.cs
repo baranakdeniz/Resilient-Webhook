@@ -5,10 +5,14 @@ namespace ResilientWebhook.Api.Services
 {
     public class WebhookQueue : IWebhookQueue
     {
-        private readonly Channel<WebhookPayload> _channel = Channel.CreateUnbounded<WebhookPayload>();
-        
+        private readonly Channel<WebhookPayload> _channel = Channel.CreateBounded<WebhookPayload>(new BoundedChannelOptions(1000)
+        {
+            FullMode = BoundedChannelFullMode.Wait
+        });
+
         public IAsyncEnumerable<WebhookPayload> ReaderAllAsync(CancellationToken cancellationToken)
         {
+           
            return _channel.Reader.ReadAllAsync(cancellationToken);  
         }
 
