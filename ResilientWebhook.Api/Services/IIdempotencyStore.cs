@@ -2,7 +2,7 @@
 {
     public interface IIdempotencyStore
     {
-        public Task<bool> TryAddAsync(string key, TimeSpan ttl);//neden datetimeoffset olmasın?
+        public Task<bool> TryAddAsync(string key, TimeSpan ttl);
         public Task RemoveAsync(string key);
     }
 }

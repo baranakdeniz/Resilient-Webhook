@@ -6,7 +6,7 @@ namespace ResilientWebhook.Api.Models
     {
         [Key]
         public string Key { get; set; } = string.Empty;//set? gerekli mi ? idempotencyler geldiği gibi kalır değiştirilemez içeriği?
-        public DateTimeOffset ExpiresAt { get; set; }
+        public DateTime ExpiresAt { get; set; }
 
     }
 }

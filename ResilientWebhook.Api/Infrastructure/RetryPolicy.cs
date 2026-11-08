@@ -24,13 +24,13 @@
 
                     var jitter = new Random().Next(0, 500); // Add jitter to avoid thundering herd problem
 
-                    Console.WriteLine($"Geçici hata: {ex.Message}. {attempts}. kez tekrar deneniyor ({delayMs + jitter} ms sonra)...");
+                    Console.WriteLine($"Temporal Error {ex.Message}. {attempts}. times trying  ({delayMs + jitter} ms later)...");
 
                     await Task.Delay(delayMs + jitter , cancellationToken);
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Hata: {ex.Message}. Tüm denemeler başarısız oldu.");
+                    Console.WriteLine($"Error: {ex.Message}. All attempts failed.");
                     throw;
                 }
 

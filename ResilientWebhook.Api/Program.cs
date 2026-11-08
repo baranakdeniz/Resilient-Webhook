@@ -16,10 +16,20 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
+//Serilog config
 builder.Host.UseSerilog((context, services, configuration) => configuration
     .ReadFrom.Configuration(context.Configuration)
     .ReadFrom.Services(services)
     .Enrich.FromLogContext());
+
+var maxBodySize = builder.Configuration.GetValue<long?>("Kestrel:Limits:MaxRequestBodySize") ?? 1048576;
+//Limit the Request Body Size
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.Limits.MaxRequestBodySize = maxBodySize;
+});
+
+
 
 
 builder.Services.AddControllers();
@@ -27,6 +37,7 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+//Rate limiting services
 builder.Services.AddMemoryCache();
 builder.Services.Configure<IpRateLimitOptions>(builder.Configuration.GetSection("IpRateLimiting"));
 builder.Services.AddSingleton<IIpPolicyStore, MemoryCacheIpPolicyStore>();
@@ -37,16 +48,19 @@ builder.Services.AddSingleton<IRateLimitConfiguration, RateLimitConfiguration>()
 builder.Services.AddHealthChecks()
 .AddDbContextCheck<AppDbContext>();
 builder.Services.AddSingleton<IProcessingStrategy, AsyncKeyLockProcessingStrategy>();
+
+
+
 builder.Services.AddSingleton<IWebhookQueue, WebhookQueue>();
-
-
 builder.Services.AddHostedService<WebhookBackgroundWorker>();
+builder.Services.AddHostedService<IdempotencyCleanupWorker>();
 
 builder.Services.AddSingleton<InMemoryIdempotencyStore>();
 builder.Services.AddScoped<IIdempotencyStore, DbIdempotencyStore>();
 builder.Services.AddSingleton<WebhookSignatureValidator>();
 builder.Services.AddScoped<WebhookProcessor>();
 
+//EF Core with SQLite
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite("Data Source=webhooks.db"));
 
@@ -72,6 +86,8 @@ app.UseSerilogRequestLogging(options =>
 });
 
 app.UseIpRateLimiting();
+
+
 app.MapPost("/api/webhook", async (
     HttpContext context,
     WebhookProcessor processor,

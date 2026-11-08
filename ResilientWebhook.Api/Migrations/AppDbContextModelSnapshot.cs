@@ -48,7 +48,7 @@ namespace ResilientWebhook.Api.Migrations
                     b.Property<string>("Key")
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTimeOffset>("ExpiresAt")
+                    b.Property<DateTime>("ExpiresAt")
                         .HasColumnType("TEXT");
 
                     b.HasKey("Key");

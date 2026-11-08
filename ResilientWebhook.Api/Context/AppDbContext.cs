@@ -9,5 +9,7 @@ namespace ResilientWebhook.Api.Context
 
         public DbSet<FailedWebhook> FailedWebhooks { get; set; }
         public DbSet<IdempotencyRecord> IdempotencyRecords { get; set; }
+        public DbSet<ProcessedWebhook> ProcessedWebhooks { get; set; }
+
     }
 }

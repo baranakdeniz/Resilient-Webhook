@@ -18,7 +18,7 @@ namespace ResilientWebhook.Api.Services
         {  var record = new IdempotencyRecord
                 {
                     Key = key,
-                    ExpiresAt = DateTimeOffset.UtcNow.Add(ttl)
+                    ExpiresAt = DateTime.UtcNow.Add(ttl)
                 };
             _dbContext.IdempotencyRecords.Add(record);
             try
